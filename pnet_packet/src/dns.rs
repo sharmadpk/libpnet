@@ -503,7 +503,7 @@ fn rname_length(packet: &DnsResponsePacket) -> usize {
     size
 }
 
-// parse any string in the DNS message, using its unique encoding
+// parse any string in the DNS message (except TXT fields), using its unique encoding
 // Call this on DnsPacket, pass the string([u8]) to be decoded
 pub fn parse_name(packet: &DnsPacket, coded_name: &Vec<u8>) -> Result<String, Utf8Error> {
     // First follow the path in the rname, except if it starts with a C0
@@ -541,12 +541,28 @@ pub fn parse_name(packet: &DnsPacket, coded_name: &Vec<u8>) -> Result<String, Ut
 }
 
 #[packet]
-pub struct DnsRrTXT {
-    pub data_len: u8,
-    #[length = "data_len"]
-    pub text: Vec<u8>,
+pub struct TxtField {
+    pub len: u8,
+    #[length = "len"]
+    pub value: Vec<u8>,
     #[payload]
     pub payload: Vec<u8>,
+}
+
+#[packet]
+pub struct DnsRrTxt {
+    pub data_len: u8,
+    #[length = "data_len"]
+    pub texts: Vec<TxtField>,
+    #[payload]
+    pub payload: Vec<u8>,
+}
+
+pub fn get_txt_str(txt: &TxtField) -> &str {
+    match str::from_utf8(&txt.value) {
+        Ok(s) => s,
+        Err(_) => "",
+    }
 }
 
 #[packet]
