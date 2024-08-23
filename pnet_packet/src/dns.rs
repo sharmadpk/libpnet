@@ -546,16 +546,22 @@ pub struct TxtField {
     #[length = "len"]
     pub value: Vec<u8>,
     #[payload]
+    #[length = "0"]
     pub payload: Vec<u8>,
 }
 
+// There may  be multiple text strings in a TXT RR
 #[packet]
 pub struct DnsRrTxt {
-    pub data_len: u8,
-    #[length = "data_len"]
+    #[length_fn = "txt_length"]
     pub texts: Vec<TxtField>,
     #[payload]
     pub payload: Vec<u8>,
+}
+
+pub fn txt_length(packet: &DnsRrTxtPacket) -> usize {
+    let length = packet.packet().len();
+    length
 }
 
 pub fn get_txt_str(txt: &TxtField) -> &str {
@@ -730,6 +736,65 @@ fn test_dns_response() {
 fn test_mdns_response() {
     let data = b"\x00\x00\x84\x00\x00\x00\x00\x04\x00\x00\x00\x00\x0b\x5f\x61\x6d\x7a\x6e\x2d\x61\x6c\x65\x78\x61\x04\x5f\x74\x63\x70\x05\x6c\x6f\x63\x61\x6c\x00\x00\x0c\x00\x01\x00\x00\x11\x94\x00\x0b\x08\x5f\x73\x65\x72\x76\x69\x63\x65\xc0\x0c\xc0\x2e\x00\x10\x80\x01\x00\x00\x11\x94\x00\x0a\x09\x76\x65\x72\x73\x69\x6f\x6e\x3d\x31\xc0\x2e\x00\x21\x80\x01\x00\x00\x00\x78\x00\x1d\x00\x00\x00\x00\x19\x8f\x14\x61\x76\x73\x2d\x66\x66\x72\x65\x67\x2d\x31\x36\x35\x34\x34\x37\x35\x36\x38\x33\xc0\x1d\xc0\x61\x00\x01\x80\x01\x00\x00\x00\x78\x00\x04\xc0\xa8\x01\x06";
     let packet = DnsPacket::new(data).expect("Failed to parse dns response");
+    /* Reference
+    Multicast Domain Name System (response)
+        Transaction ID: 0x0000
+        Flags: 0x8400 Standard query response, No error
+            1... .... .... .... = Response: Message is a response
+            .000 0... .... .... = Opcode: Standard query (0)
+            .... .1.. .... .... = Authoritative: Server is an authority for domain
+            .... ..0. .... .... = Truncated: Message is not truncated
+            .... ...0 .... .... = Recursion desired: Don't do query recursively
+            .... .... 0... .... = Recursion available: Server can't do recursive queries
+            .... .... .0.. .... = Z: reserved (0)
+            .... .... ..0. .... = Answer authenticated: Answer/authority portion was not authenticated by the server
+            .... .... ...0 .... = Non-authenticated data: Unacceptable
+            .... .... .... 0000 = Reply code: No error (0)
+        Questions: 0
+        Answer RRs: 4
+        Authority RRs: 0
+        Additional RRs: 0
+        Answers
+            _amzn-alexa._tcp.local: type PTR, class IN, _service._amzn-alexa._tcp.local
+                Name: _amzn-alexa._tcp.local
+                Type: PTR (12) (domain name PoinTeR)
+                .000 0000 0000 0001 = Class: IN (0x0001)
+                0... .... .... .... = Cache flush: False
+                Time to live: 4500 (1 hour, 15 minutes)
+                Data length: 11
+                Domain Name: _service._amzn-alexa._tcp.local
+            _service._amzn-alexa._tcp.local: type TXT, class IN, cache flush
+                Name: _service._amzn-alexa._tcp.local
+                Type: TXT (16) (Text strings)
+                .000 0000 0000 0001 = Class: IN (0x0001)
+                1... .... .... .... = Cache flush: True
+                Time to live: 4500 (1 hour, 15 minutes)
+                Data length: 10
+                TXT Length: 9
+                TXT: version=1
+            _service._amzn-alexa._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 6543, target avs-ffreg-81694318.local
+                Instance: _service
+                Service: _amzn-alexa
+                Protocol: _tcp
+                Name: local
+                Type: SRV (33) (Server Selection)
+                .000 0000 0000 0001 = Class: IN (0x0001)
+                1... .... .... .... = Cache flush: True
+                Time to live: 120 (2 minutes)
+                Data length: 27
+                Priority: 0
+                Weight: 0
+                Port: 6543
+                Target: avs-ffreg-81694318.local
+            avs-ffreg-81694318.local: type A, class IN, cache flush, addr 192.168.1.6
+                Name: avs-ffreg-81694318.local
+                Type: A (1) (Host Address)
+                .000 0000 0000 0001 = Class: IN (0x0001)
+                1... .... .... .... = Cache flush: True
+                Time to live: 120 (2 minutes)
+                Data length: 4
+                Address: 192.168.1.6
+     */
     assert_eq!(packet.get_id(), 0);
     assert_eq!(packet.get_is_response(), 1);
     assert_eq!(packet.get_opcode(), Opcode::StandardQuery);
@@ -766,9 +831,12 @@ fn test_mdns_response() {
     assert_eq!(responses[1].rtype, DnsTypes::TXT);
     assert_eq!(responses[1].ttl, 4500);
     assert_eq!(responses[1].data_len, 10);
-    let text_rr = DnsRrTXTPacket::new(&responses[1].data).unwrap();
-    assert_eq!(text_rr.get_data_len(), 9);
-    assert_eq!(String::from_utf8(text_rr.get_text()).unwrap(), "version=1");
+    let text_rr = DnsRrTxtPacket::new(&responses[1].data).unwrap();
+    let texts = text_rr.get_texts();
+    assert_eq!(texts.len(), 1);
+    let text = &texts[0];
+    assert_eq!(text.len, 9);
+    assert_eq!(get_txt_str(text), "version=1");
     // RR #3
     let srv_name = parse_name(&packet, &responses[2].rname).unwrap();
     assert_eq!(
