@@ -24,7 +24,6 @@ use pnet::packet::Packet;
 use pnet::util::MacAddr;
 
 use std::env;
-use std::io::{self, Write};
 use std::net::IpAddr;
 use std::process;
 
@@ -222,7 +221,7 @@ fn main() {
     let iface_name = match env::args().nth(1) {
         Some(n) => n,
         None => {
-            writeln!(io::stderr(), "USAGE: packetdump <NETWORK INTERFACE>").unwrap();
+            eprintln!("USAGE: packetdump <NETWORK INTERFACE>");
             process::exit(1);
         }
     };
@@ -231,9 +230,7 @@ fn main() {
     // Find the network interface with the provided name
     let interfaces = datalink::interfaces();
     let interface = interfaces
-        .into_iter()
-        .filter(interface_names_match)
-        .next()
+        .into_iter().find(interface_names_match)
         .unwrap_or_else(|| panic!("No such network interface: {}", iface_name));
 
     // Create a channel to receive on

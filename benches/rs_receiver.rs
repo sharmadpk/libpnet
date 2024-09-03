@@ -20,9 +20,7 @@ fn main() {
     // Find the network interface with the provided name
     let interfaces = pnet_datalink::interfaces();
     let interface = interfaces
-        .into_iter()
-        .filter(|iface| iface.name == iface_name)
-        .next()
+        .into_iter().find(|iface| iface.name == iface_name)
         .unwrap();
 
     // Create a channel to receive on

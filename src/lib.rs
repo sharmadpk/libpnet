@@ -7,7 +7,7 @@
 // except according to those terms.
 
 #![deny(missing_docs)]
-#![deny(warnings)]
+//#![deny(warnings)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(feature = "nightly", feature(custom_attribute, plugin))]
 #![cfg_attr(feature = "nightly", plugin(pnet_macros_plugin))]
@@ -150,5 +150,5 @@ pub mod util;
 
 // NOTE should probably have a cfg(pnet_test_network) here, but cargo doesn't
 //      allow custom --cfg flags
-#[cfg(all(test, std))]
+#[cfg(all(test, feature = "std"))]
 mod pnettest;

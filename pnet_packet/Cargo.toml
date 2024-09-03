@@ -17,6 +17,7 @@ pnet_macros_support = { path = "../pnet_macros_support", version = "0.35.0" }
 pnet_macros = { path = "../pnet_macros", version = "0.35.0" }
 
 [features]
+benchmark = []
 std = ["pnet_base/std"]
 default = ["std"]
 

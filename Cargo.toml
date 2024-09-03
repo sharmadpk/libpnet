@@ -14,6 +14,8 @@ edition = "2021"
 
 [features]
 benchmark = []
+nightly = []
+clippy = []
 netmap = ["pnet_datalink/netmap_sys", "pnet_datalink/netmap"]
 pcap = ["pnet_datalink/pcap"]
 appveyor = []

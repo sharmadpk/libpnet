@@ -12,12 +12,11 @@
 extern crate pnet;
 extern crate pnet_datalink;
 
-use std::io::{self, Write};
 use std::process;
 
 #[cfg(not(target_os = "linux"))]
 fn main() {
-    writeln!(io::stderr(), "fanout is only supported on Linux").unwrap();
+    eprintln!("fanout is only supported on Linux");
     process::exit(1);
 }
 

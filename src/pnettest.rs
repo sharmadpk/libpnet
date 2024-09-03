@@ -208,7 +208,7 @@ fn layer4(ip: IpAddr, header_len: usize) {
     let res = thread::spawn(move || {
         tx.send(()).expect("could not send message through channel");
         let mut iter = udp_packet_iter(&mut trx);
-        loop {
+        // loop {
             let next = iter.next();
             match next {
                 Ok((header, addr)) => {
@@ -218,13 +218,13 @@ fn layer4(ip: IpAddr, header_len: usize) {
                         UdpPacket::new(&packet[header_len..packet_len])
                             .expect("could not create UdpPacket")
                     );
-                    break;
+                    //break;
                 }
                 Err(e) => {
                     panic!("Receive failed for layer4_test(): {}", e);
                 }
             }
-        }
+        // }
     });
 
     rx.recv()
@@ -302,7 +302,7 @@ fn layer3_ipv4() {
                         &udp_header.packet()[UDP_HEADER_LEN..],
                         &packet[IPV4_HEADER_LEN + UDP_HEADER_LEN..]
                     );
-                    break;
+                    // break;
                 }
                 Err(e) => {
                     panic!("receive failed for layer3_ipv4_test(): {}", e);
