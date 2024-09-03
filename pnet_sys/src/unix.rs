@@ -118,7 +118,7 @@ pub mod public {
     /// Convert a Duration into a platform specific `timespec`.
     pub fn duration_to_timespec(dur: Duration) -> libc::timespec {
         libc::timespec {
-            tv_sec: dur.as_secs() as libc::time_t,
+            tv_sec: dur.as_secs() as i64, // libc::time_t, patch for musl
             tv_nsec: (dur.subsec_nanos() as TvUsecType).into(),
         }
     }
