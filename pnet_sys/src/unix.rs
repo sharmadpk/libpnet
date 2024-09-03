@@ -105,7 +105,7 @@ pub mod public {
     /// Convert a Duration into a platform specific `timeval`.
     pub fn duration_to_timeval(dur: Duration) -> libc::timeval {
         libc::timeval {
-            tv_sec: dur.as_secs() as libc::time_t,
+            tv_sec: dur.as_secs() as i64, // libc::time_t, patch for musl
             tv_usec: dur.subsec_micros() as TvUsecType,
         }
     }
