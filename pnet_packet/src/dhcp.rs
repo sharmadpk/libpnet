@@ -105,6 +105,7 @@ pub struct Dhcp {
 // Special DHCP option codes
 const DHCP_OPTION_PAD: u8 = 0;
 const DHCP_OPTION_END: u8 = 255;
+const DHCP_OPTION_MAGIC:u8 = 99;
 
 // Location of the DHCP options in the packet
 const DHCP_OPTIONS_OFFSET: usize = 240;
@@ -113,6 +114,7 @@ const DHCP_OPTIONS_OFFSET: usize = 240;
 #[allow(non_snake_case)]
 pub struct DhcpOption {
     pub code: u8,
+    // Caution: does not exist for pad, end and is not relevant for magic
     pub data_len: u8,
     #[length = "data_len"]
     pub value: Vec<u8>,
@@ -128,6 +130,7 @@ fn dhcp_options_length(packet: &DhcpPacket) -> usize {
         length += match code {
             DHCP_OPTION_PAD => 1,
             DHCP_OPTION_END => 1,
+            DHCP_OPTION_MAGIC => 6,
             _ => {
                 let len = packet.packet()[offset + length + 1] as usize;
                 2 + len
