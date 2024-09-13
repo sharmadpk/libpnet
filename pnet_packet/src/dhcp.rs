@@ -96,6 +96,8 @@ pub struct Dhcp {
     pub sname: Vec<u8>,
     #[length = "128"]
     pub file: Vec<u8>,
+    #[length = "4"]
+    pub magic: Vec<u8>,
     #[payload]
     pub options: Vec<u8>,
 }
