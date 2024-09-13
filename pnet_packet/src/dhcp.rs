@@ -6,7 +6,7 @@ use core::net::Ipv4Addr;
 
 use pnet_base::MacAddr;
 use pnet_macros::packet;
-use pnet_macros_support::{packet::Packet, types::*};
+use pnet_macros_support::types::*;
 
 /// Represents an Dhcp operation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -96,19 +96,9 @@ pub struct Dhcp {
     pub sname: Vec<u8>,
     #[length = "128"]
     pub file: Vec<u8>,
-    #[length_fn = "dhcp_options_length"]
-    pub options: Vec<DhcpOption>,
     #[payload]
-    pub padding: Vec<u8>,
+    pub options: Vec<u8>,
 }
-
-// Special DHCP option codes
-const DHCP_OPTION_PAD: u8 = 0;
-const DHCP_OPTION_END: u8 = 255;
-const DHCP_OPTION_MAGIC:u8 = 99;
-
-// Location of the DHCP options in the packet
-const DHCP_OPTIONS_OFFSET: usize = 240;
 
 #[packet]
 #[allow(non_snake_case)]
@@ -120,27 +110,6 @@ pub struct DhcpOption {
     pub value: Vec<u8>,
     #[payload]
     pub payload: Vec<u8>,
-}
-
-fn dhcp_options_length(packet: &DhcpPacket) -> usize {
-    let mut length = 0;
-    let offset = DHCP_OPTIONS_OFFSET;
-    loop{
-        let code = packet.packet()[offset+length];
-        length += match code {
-            DHCP_OPTION_PAD => 1,
-            DHCP_OPTION_END => 1,
-            DHCP_OPTION_MAGIC => 6,
-            _ => {
-                let len = packet.packet()[offset + length + 1] as usize;
-                2 + len
-            }
-        };
-        if code == DHCP_OPTION_END {
-            break;
-        }
-    }
-    length
 }
 
 #[cfg(test)]
