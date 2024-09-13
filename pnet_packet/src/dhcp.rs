@@ -98,12 +98,21 @@ pub struct Dhcp {
     pub file: Vec<u8>,
     #[length = "4"]
     pub magic: Vec<u8>,
+    #[payload]
+    pub options: Vec<u8>,
+}
+
+// Set of DHCP options
+#[packet]
+#[allow(non_snake_case)]
+pub struct DhcpOptionList {
     #[length_fn ="dhcp_options_length"]
     pub options: Vec<DhcpOption>,
     #[payload]
     pub payload: Vec<u8>,
 }
 
+/// Represents an DHCP Option.
 #[packet]
 #[allow(non_snake_case)]
 pub struct DhcpOption {
@@ -122,20 +131,16 @@ const DHCP_OPTION_PAD: u8 = 0;
 const DHCP_OPTION_END: u8 = 255;
 const DHCP_OPTION_MAGIC:u8 = 99;
 
-// Location of the DHCP options in the packet
-const DHCP_OPTIONS_OFFSET: usize = 240;
-
-fn dhcp_options_length(packet: &DhcpPacket) -> usize {
+fn dhcp_options_length(packet: &DhcpOptionListPacket) -> usize {
     let mut length = 0;
-    let offset = DHCP_OPTIONS_OFFSET;
     loop{
-        let code = packet.packet()[offset+length];
+        let code = packet.packet()[length];
         length += match code {
             DHCP_OPTION_PAD => 1,
             DHCP_OPTION_END => 1,
             DHCP_OPTION_MAGIC => 6,
             _ => {
-                let len = packet.packet()[offset + length + 1] as usize;
+                let len = packet.packet()[length + 1] as usize;
                 2 + len
             }
         };
