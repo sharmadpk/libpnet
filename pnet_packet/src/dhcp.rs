@@ -125,11 +125,21 @@ pub struct DhcpOption {
     pub payload: Vec<u8>,
 }
 
-
-// Special DHCP option codes
-const DHCP_OPTION_PAD: u8 = 0;
-const DHCP_OPTION_END: u8 = 255;
-const DHCP_OPTION_MAGIC:u8 = 99;
+// Set of common DHCP option codes
+pub const DHCP_OPTION_PAD: u8 = 0;
+pub const DHCP_OPTION_SUBNET_MASK: u8 = 1;
+pub const DHCP_OPTION_ROUTER: u8 = 3;
+pub const DHCP_OPTION_DNS_SERVER: u8 = 6;
+pub const DHCP_OPTION_DOMAIN_NAME: u8 = 15;
+pub const DHCP_OPTION_IP_LEASE_TIME: u8 = 51;
+pub const DHCP_OPTION_MESSAGE_TYPE: u8 = 53;
+pub const DHCP_OPTION_SERVER_IDENTIFIER: u8 = 54;
+pub const DHCP_OPTION_PARAMETER_REQUEST_LIST: u8 = 55;
+pub const DHCP_OPTION_RENEWAL_TIME: u8 = 58;
+pub const DHCP_OPTION_REBINDING_TIME: u8 = 59;
+pub const DHCP_OPTION_CLIENT_IDENTIFIER: u8 = 61;
+pub const DHCP_OPTION_END: u8 = 255;
+pub const DHCP_OPTION_MAGIC: u8 = 99;
 
 fn dhcp_options_length(packet: &DhcpOptionListPacket) -> usize {
     let mut length = 0;
