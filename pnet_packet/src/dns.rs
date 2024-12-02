@@ -511,17 +511,17 @@ pub fn parse_name(packet: &DnsPacket, coded_name: &Vec<u8>) -> Result<String, Ut
     let start = packet.packet();
     let mut name = coded_name.as_slice();
     let mut rname = String::new();
-    let mut offset:usize = 0;
+    let mut offset: usize = 0;
 
     loop {
-        let label_len:u16 = name[offset] as u16;
+        let label_len: u16 = name[offset] as u16;
         if label_len == 0 {
             break;
         }
         if (label_len & 0xC0) == 0xC0 {
             let offset1 = ((label_len & 0x3F) as usize) << 8;
             let offset2 = name[offset + 1] as usize;
-            offset =  offset1 + offset2;
+            offset = offset1 + offset2;
             // now change name
             name = start;
             continue;
@@ -533,7 +533,7 @@ pub fn parse_name(packet: &DnsPacket, coded_name: &Vec<u8>) -> Result<String, Ut
             match str::from_utf8(&name[offset + 1..offset + 1 + label_len as usize]) {
                 Ok(s) => s,
                 Err(e) => return Err(e),
-            }
+            },
         );
         offset += label_len as usize + 1;
     }
@@ -600,7 +600,7 @@ fn target_length(packet: &DnsRrSrvPacket) -> usize {
     }
     size
 }
- 
+
 #[derive(Debug)]
 pub struct SrvName {
     pub instance: Option<String>,
@@ -613,37 +613,29 @@ impl SrvName {
     pub fn new(name: &str) -> Self {
         let parts: Vec<&str> = name.split('.').collect();
         match parts.len() {
-            len if len >4 => {
-                SrvName {
-                    instance: Some(parts[0..len-3].join(".")),
-                    service: Some(String::from(parts[len-3])),
-                    protocol: Some(String::from(parts[len-2])),
-                    domain: Some(String::from(parts[len-1])),
-                }
+            len if len > 4 => SrvName {
+                instance: Some(parts[0..len - 3].join(".")),
+                service: Some(String::from(parts[len - 3])),
+                protocol: Some(String::from(parts[len - 2])),
+                domain: Some(String::from(parts[len - 1])),
             },
-            4 => {
-                SrvName {
-                    instance: Some(String::from(parts[0])),
-                    service: Some(String::from(parts[1])),
-                    protocol: Some(String::from(parts[2])),
-                    domain: Some(String::from(parts[3])),
-                }
+            4 => SrvName {
+                instance: Some(String::from(parts[0])),
+                service: Some(String::from(parts[1])),
+                protocol: Some(String::from(parts[2])),
+                domain: Some(String::from(parts[3])),
             },
-            3 => {
-                SrvName {
-                    instance: None,
-                    service: Some(String::from(parts[0])),
-                    protocol: Some(String::from(parts[1])),
-                    domain: Some(String::from(parts[2])),
-                }
+            3 => SrvName {
+                instance: None,
+                service: Some(String::from(parts[0])),
+                protocol: Some(String::from(parts[1])),
+                domain: Some(String::from(parts[2])),
             },
-            _ => {
-                SrvName {
-                    instance: None,
-                    service: None,
-                    protocol: None,
-                    domain: None,
-                }
+            _ => SrvName {
+                instance: None,
+                service: None,
+                protocol: None,
+                domain: None,
             },
         }
     }
@@ -839,9 +831,7 @@ fn test_mdns_response() {
     assert_eq!(get_txt_str(text), "version=1");
     // RR #3
     let srv_name = parse_name(&packet, &responses[2].rname).unwrap();
-    assert_eq!(
-        srv_name, "_service._amzn-alexa._tcp.local"
-    );
+    assert_eq!(srv_name, "_service._amzn-alexa._tcp.local");
     assert_eq!(responses[2].rtype, DnsTypes::SRV);
     assert_eq!(responses[2].data_len, 29);
     let srv_rr = DnsRrSrvPacket::new(&responses[2].data).unwrap();
@@ -860,5 +850,125 @@ fn test_mdns_response() {
     // RR #4
     assert_eq!(responses[3].rtype, DnsTypes::A);
     assert_eq!(responses[3].data.as_slice(), [192, 168, 1, 6]);
+}
 
+#[test]
+fn test_mdns_revip_response() {
+    let data = b"\x00\x00\x84\x00\x00\x00\x00\x03\x00\x00\x00\x03\x01\x30\x01\x30\x01\x43\x01\x31\x01\x33\x01\x38\x01\x32\x01\x31\x01\x45\x01\x36\x01\x39\x01\x43\x01\x33\x01\x45\x01\x43\x01\x31\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x30\x01\x38\x01\x45\x01\x46\x03\x69\x70\x36\x04\x61\x72\x70\x61\x00\x00\x0c\x80\x01\x00\x00\x11\x94\x00\x14\x0c\x44\x65\x65\x70\x61\x6b\x2d\x69\x50\x68\x31\x33\x05\x6c\x6f\x63\x61\x6c\x00\x01\x33\x01\x37\x01\x44\x01\x39\x01\x34\x01\x34\x01\x43\x01\x33\x01\x45\x01\x31\x01\x32\x01\x30\x01\x39\x01\x46\x01\x38\x01\x30\x01\x30\x01\x30\x01\x32\x01\x30\x01\x31\x01\x34\x01\x42\x01\x41\x01\x30\x01\x30\x01\x30\x01\x37\x01\x37\x01\x30\x01\x34\x01\x32\xc0\x4c\x00\x0c\x80\x01\x00\x00\x11\x94\x00\x02\xc0\x60\x02\x38\x35\x01\x31\x03\x31\x36\x38\x03\x31\x39\x32\x07\x69\x6e\x2d\x61\x64\x64\x72\xc0\x50\x00\x0c\x80\x01\x00\x00\x11\x94\x00\x02\xc0\x60\xc0\x0c\x00\x2f\x80\x01\x00\x00\x11\x94\x00\x06\xc0\x0c\x00\x02\x00\x08\xc0\x74\x00\x2f\x80\x01\x00\x00\x11\x94\x00\x06\xc0\x74\x00\x02\x00\x08\xc0\xc2\x00\x2f\x80\x01\x00\x00\x11\x94\x00\x06\xc0\xc2\x00\x02\x00\x08";
+    let packet = DnsPacket::new(data).expect("Failed to parse dns response");
+    /* From 192.168.1.85:5353 (f2:0c:4b:7e:3b:db) to 224.0.0.251:5353
+       Transaction ID: 0x0000
+       Flags: 0x8400 Standard query response, No error
+       Questions: 0
+       Answer RRs: 3
+       Authority RRs: 0
+       Additional RRs: 3
+       Answers
+           0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa: type PTR, class IN, cache flush, Deepak-iPh13.local
+               Name: 0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa
+               Type: PTR (12) (domain name PoinTeR)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 20
+               Domain Name: Deepak-iPh13.local
+           3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa: type PTR, class IN, cache flush, Deepak-iPh13.local
+               Name: 3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa
+               Type: PTR (12) (domain name PoinTeR)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 2
+               Domain Name: Deepak-iPh13.local
+           85.1.168.192.in-addr.arpa: type PTR, class IN, cache flush, Deepak-iPh13.local
+               Name: 85.1.168.192.in-addr.arpa
+               Type: PTR (12) (domain name PoinTeR)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 2
+               Domain Name: Deepak-iPh13.local
+       Additional records
+           0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa: type NSEC, class IN, cache flush, next domain name 0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa
+               Name: 0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa
+               Type: NSEC (47) (Next Secure)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 6
+               Next Domain Name: 0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa
+               RR type in bit map: PTR (domain name PoinTeR)
+           3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa: type NSEC, class IN, cache flush, next domain name 3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa
+               Name: 3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa
+               Type: NSEC (47) (Next Secure)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 6
+               Next Domain Name: 3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa
+               RR type in bit map: PTR (domain name PoinTeR)
+           85.1.168.192.in-addr.arpa: type NSEC, class IN, cache flush, next domain name 85.1.168.192.in-addr.arpa
+               Name: 85.1.168.192.in-addr.arpa
+               Type: NSEC (47) (Next Secure)
+               .000 0000 0000 0001 = Class: IN (0x0001)
+               1... .... .... .... = Cache flush: True
+               Time to live: 4500 (1 hour, 15 minutes)
+               Data length: 6
+               Next Domain Name: 85.1.168.192.in-addr.arpa
+               RR type in bit map: PTR (domain name PoinTeR)
+    */
+    assert_eq!(packet.get_id(), 0);
+    assert_eq!(packet.get_is_response(), 1);
+    assert_eq!(packet.get_opcode(), Opcode::StandardQuery);
+    assert_eq!(packet.get_is_authoriative(), 1);
+    assert_eq!(packet.get_is_truncated(), 0);
+    assert_eq!(packet.get_is_recursion_desirable(), 0);
+    assert_eq!(packet.get_is_recursion_available(), 0);
+    assert_eq!(packet.get_zero_reserved(), 0);
+    assert_eq!(packet.get_rcode(), Retcode::NoError);
+    assert_eq!(packet.get_query_count(), 0);
+    assert_eq!(packet.get_response_count(), 3);
+    assert_eq!(packet.get_authority_rr_count(), 0);
+    assert_eq!(packet.get_additional_rr_count(), 3);
+    assert_eq!(packet.get_responses().len(), 3);
+    let responses = packet.get_responses();
+    // RR #1
+    assert_eq!(
+        parse_name(&packet, &responses[0].rname).unwrap(),
+        "0.0.C.1.3.8.2.1.E.6.9.C.3.E.C.1.0.0.0.0.0.0.0.0.0.0.0.0.0.8.E.F.ip6.arpa"
+    );
+    assert_eq!(responses[0].rtype, DnsTypes::PTR);
+    assert_eq!(responses[0].rclass.0 & 0x7fff, DnsClasses::IN.0);
+    assert_eq!(responses[0].ttl, 4500);
+    assert_eq!(responses[0].data_len, 20);
+    assert_eq!(
+        parse_name(&packet, &responses[0].data).unwrap(),
+        "Deepak-iPh13.local"
+    );
+    // RR #2
+    assert_eq!(
+        parse_name(&packet, &responses[1].rname).unwrap(),
+        "3.7.D.9.4.4.C.3.E.1.2.0.9.F.8.0.0.0.2.0.1.4.B.A.0.0.0.7.7.0.4.2.ip6.arpa"
+    );
+    assert_eq!(responses[1].rtype, DnsTypes::PTR);
+    assert_eq!(responses[1].rclass.0 & 0x7fff, DnsClasses::IN.0);
+    assert_eq!(responses[1].ttl, 4500);
+    assert_eq!(responses[1].data_len, 2);
+    assert_eq!(
+        parse_name(&packet, &responses[1].data).unwrap(),
+        "Deepak-iPh13.local"
+    );
+    // RR #3
+    assert_eq!(
+        parse_name(&packet, &responses[2].rname).unwrap(),
+        "85.1.168.192.in-addr.arpa"
+    );
+    assert_eq!(responses[2].rtype, DnsTypes::PTR);
+    assert_eq!(responses[2].rclass.0 & 0x7fff, DnsClasses::IN.0);
+    assert_eq!(responses[2].ttl, 4500);
+    assert_eq!(responses[2].data_len, 2);
+    assert_eq!(
+        parse_name(&packet, &responses[2].data).unwrap(),
+        "Deepak-iPh13.local"
+    );
 }

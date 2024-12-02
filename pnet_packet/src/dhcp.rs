@@ -168,62 +168,60 @@ mod tests {
     #[test]
     fn test_analyze_dhcp_response_packet() {
         // Create a sample DHCP response packet
-        let mut packet = Dhcp::default();
-        packet.op = DhcpOperations::Reply;
-        packet.htype = DhcpHardwareTypes::Ethernet;
-        packet.hlen = 6;
-        packet.hops = 0;
-        packet.xid = 123456789;
-        packet.secs = 0;
-        packet.flags = 0;
-        packet.ciaddr = Ipv4Addr::new(192, 168, 0, 1);
-        packet.yiaddr = Ipv4Addr::new(192, 168, 0, 100);
-        packet.siaddr = Ipv4Addr::new(192, 168, 0, 254);
-        packet.giaddr = Ipv4Addr::new(0, 0, 0, 0);
-        packet.chaddr = MacAddr::new(0x00, 0x11, 0x22, 0x33, 0x44, 0x55);
-        packet.chaddr_pad = vec![0; 10];
-        packet.sname = vec![0; 64];
-        packet.file = vec![0; 128];
-        packet.options = vec![0x35, 0x01, 0x02]; // DHCP Message Type: Offer
-        
+        let packet = DhcpPacket::new(b"\x02\x01\x06\x00\xd2\x2b\x75\x5a\x00\x00\x00\x00\x00\x00\x00\x00\xc0\xa8\x01\x19\x00\x00\x00\x00\x00\x00\x00\x00\x82\x94\x79\x3b\xa8\x51\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x82\x53\x63\x35\x01\x02\x36\x04\xc0\xa8\x01\x01\x33\x04\x00\x01\x51\x80\x01\x04\xff\xff\xff\x00\x03\x04\xc0\xa8\x01\x01\x06\x04\xc0\xa8\x01\x01\xff").unwrap();
+        /*
+        Dynamic Host Configuration Protocol (Offer)
+            Message type: Boot Reply (2)
+            Hardware type: Ethernet (0x01)
+            Hardware address length: 6
+            Hops: 0
+            Transaction ID: 0xd22b755a
+            Seconds elapsed: 0
+            Bootp flags: 0x0000 (Unicast)
+            Client IP address: 0.0.0.0
+            Your (client) IP address: 192.168.1.25
+            Next server IP address: 0.0.0.0
+            Relay agent IP address: 0.0.0.0
+            Client MAC address: 82:94:79:3b:a8:51 (82:94:79:3b:a8:51)
+            Client hardware address padding: 00000000000000000000
+            Server host name not given
+            Boot file name not given
+            Magic cookie: DHCP
+            Option: (53) DHCP Message Type (Offer)
+                Length: 1
+                DHCP: Offer (2)
+            Option: (54) DHCP Server Identifier (192.168.1.1)
+                Length: 4
+                DHCP Server Identifier: 192.168.1.1
+            Option: (51) IP Address Lease Time
+                Length: 4
+                IP Address Lease Time: 1 day (86400)
+            Option: (1) Subnet Mask (255.255.255.0)
+                Length: 4
+                Subnet Mask: 255.255.255.0
+            Option: (3) Router
+                Length: 4
+                Router: 192.168.1.1
+            Option: (6) Domain Name Server
+                Length: 4
+                Domain Name Server: 192.168.1.1
+            Option: (255) End
+                Option End: 255
+         */
         // Analyze the DHCP response packet
-        let analyzed_packet = analyze_dhcp_response_packet(&packet);
-        
         // Assert the expected values
-        assert_eq!(analyzed_packet.message_type, DhcpMessageType::Offer);
-        assert_eq!(analyzed_packet.client_ip, Ipv4Addr::new(192, 168, 0, 1));
-        assert_eq!(analyzed_packet.your_ip, Ipv4Addr::new(192, 168, 0, 100));
-        assert_eq!(analyzed_packet.server_ip, Ipv4Addr::new(192, 168, 0, 254));
-        assert_eq!(analyzed_packet.client_mac, MacAddr::new(0x00, 0x11, 0x22, 0x33, 0x44, 0x55));
+        assert_eq!(packet.get_ciaddr(), Ipv4Addr::new(0, 0, 0, 0));
+        assert_eq!(packet.get_yiaddr(), Ipv4Addr::new(192, 168, 1, 25));
+        assert_eq!(packet.get_siaddr(), Ipv4Addr::new(0, 0, 0, 0));
+        assert_eq!(packet.get_chaddr(), MacAddr::new(0x82, 0x94, 0x79, 0x3b, 0xa8, 0x51));
     }
     
-    // Helper function to analyze the DHCP response packet
-    fn analyze_dhcp_response_packet(packet: &Dhcp) -> AnalyzedDhcpResponse {
-        // Implement your analysis logic here
-        // ...
-        // Return the analyzed results
-        AnalyzedDhcpResponse {
-            message_type: DhcpMessageType::Offer,
-            client_ip: packet.ciaddr,
-            your_ip: packet.yiaddr,
-            server_ip: packet.siaddr,
-            client_mac: packet.chaddr,
-        }
-    }
-    
-    // Struct to hold the analyzed DHCP response information
-    struct AnalyzedDhcpResponse {
-        message_type: DhcpMessageType,
-        client_ip: Ipv4Addr,
-        your_ip: Ipv4Addr,
-        server_ip: Ipv4Addr,
-        client_mac: MacAddr,
-    }
-    
+    /*
     // Enum to represent the DHCP message type
     #[derive(Debug, PartialEq)]
     enum DhcpMessageType {
         Offer,
         // Add more message types as needed
     }
+    */
 }
