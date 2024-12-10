@@ -142,10 +142,13 @@ pub const DHCP_OPTION_RENEWAL_TIME: u8 = 58;
 pub const DHCP_OPTION_REBINDING_TIME: u8 = 59;
 pub const DHCP_OPTION_VENDOR_CLASS_IDENTIFIER: u8 = 60;
 pub const DHCP_OPTION_CLIENT_IDENTIFIER: u8 = 61;
+pub const DHCP_OPTION_USER_CLASS: u8 = 77;
 pub const DHCP_OPTION_RAPID_COMMIT: u8 = 80;
+pub const DHCP_OPTION_CLIENT_FQDN: u8 = 81;
+pub const DHCP_OPTION_MAGIC: u8 = 99;
+pub const DHCP_OPTION_VI_VENDOR_CLASS: u8 = 124;
 pub const DHCP_OPTION_FORCE_RENEW_NONCE_CAPABLE: u8 = 145;
 pub const DHCP_OPTION_END: u8 = 255;
-pub const DHCP_OPTION_MAGIC: u8 = 99;
 
 fn dhcp_options_length(packet: &DhcpOptionListPacket) -> usize {
     let mut length = 0;
